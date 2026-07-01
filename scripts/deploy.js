@@ -1,11 +1,19 @@
 import hre from "hardhat";
 
-async function main {
-	const FastCoin = hre.ethers.getContractFactory('FastCoin');
-	const fastCoin = await FastCoin.deploy(10);
+async function main() {
+  const [deployer] = await hre.ethers.getSigners();
+  console.log("Deploying with:", deployer.address);
 
-	console.log("Deployment transaction hash:", 
+  const FastCoin = await hre.ethers.getContractFactory("Fastcoin");
+  const fastCoin = await FastCoin.deploy(1000000);
 
-	fastCoin.deploymentTransaction?.hash);
-	console.log("Pending contract object:", fastCoin);
+  await fastCoin.waitForDeployment();
+  
+  const address = await fastCoin.getAddress();
+  console.log("FastCoin deployed to:", address);
 }
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
