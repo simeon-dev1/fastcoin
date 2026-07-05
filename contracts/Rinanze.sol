@@ -29,12 +29,16 @@ contract Rinanze is
     // Storage for frozen wallets
     mapping(address => bool) private _frozenWallets;
 
+    // Supply cap (0 = uncapped)
+    uint256 public cap;
+
     // Events
     event WalletFrozen(address indexed account);
     event WalletUnfrozen(address indexed account);
     event Minted(address indexed to, uint256 amount);
     event NameChanged(string oldName, string newName);
     event SymbolChanged(string oldSymbol, string newSymbol);
+    event CapUpdated(uint256 oldCap, uint256 newCap);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -47,16 +51,18 @@ contract Rinanze is
     ) external initializer {
         __ERC20_init(name_, symbol_);
         __ERC20Pausable_init();
+        __Ownable_init(msg.sender);
         __Ownable2Step_init();
         __AccessControl_init();
-        __UUPSUpgradeable_init();
 
         // Set mutable name & symbol
         _name = name_;
         _symbol = symbol_;
 
-        // Grant roles to the owner (deployer)
-        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        // Grant remaining operational roles to the deployer.
+        // DEFAULT_ADMIN_ROLE is granted automatically to msg.sender via the
+        // _transferOwnership override below (triggered by __Ownable_init above),
+        // so it is intentionally NOT granted again here.
         _grantRole(MINTER_ROLE, msg.sender);
         _grantRole(FREEZER_ROLE, msg.sender);
         _grantRole(PAUSER_ROLE, msg.sender);
@@ -88,8 +94,18 @@ contract Rinanze is
 
     // ----- Admin / Role Functions -----
     function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
+        require(cap == 0 || totalSupply() + amount <= cap, "Mint exceeds cap");
         _mint(to, amount);
         emit Minted(to, amount);
+    }
+
+    /// @notice Sets the max mintable supply. 0 means uncapped.
+    /// @dev Cannot be set below the current total supply.
+    function setCap(uint256 newCap) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(newCap == 0 || newCap >= totalSupply(), "Cap below current supply");
+        uint256 old = cap;
+        cap = newCap;
+        emit CapUpdated(old, newCap);
     }
 
     function freezeWallet(address account) external onlyRole(FREEZER_ROLE) {
@@ -141,4 +157,30 @@ contract Rinanze is
         override
         onlyOwner
     {}
+
+    // ----- Keep owner as an admin -----
+    // Ownable and AccessControl are two independent privilege systems.
+    // This override guarantees the owner always holds DEFAULT_ADMIN_ROLE
+    // (granted automatically on transfer/accept), while still allowing
+    // additional, independent admins to be granted or revoked via the
+    // normal grantRole/revokeRole flow below.
+    function _transferOwnership(address newOwner) internal override {
+        super._transferOwnership(newOwner);
+
+        if (newOwner != address(0)) {
+            _grantRole(DEFAULT_ADMIN_ROLE, newOwner);
+        }
+    }
+
+    // Prevent the current owner from being left without DEFAULT_ADMIN_ROLE.
+    // Other admins can still be freely granted/revoked; only the owner's
+    // own admin status is protected. To remove the owner as an admin,
+    // transfer ownership away first.
+    function revokeRole(bytes32 role, address account) public override {
+        require(
+            !(role == DEFAULT_ADMIN_ROLE && account == owner()),
+            "Owner must remain admin; transfer ownership instead"
+        );
+        super.revokeRole(role, account);
+    }
 }
