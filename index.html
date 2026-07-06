@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For you</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #f8fafc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    user-select: none; /* prevents text selection */
+  }
+  .card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 40px 32px;
+    max-width: 520px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: fadeIn 1.2s ease;
+  }
+  @keyframes fadeIn { from {opacity: 0; transform: translateY(10px);} to {opacity: 1; transform: translateY(0);} }
+  h1 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+  p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    color: #cbd5e1;
+    margin-bottom: 24px;
+  }
+  .reveal-btn {
+    background: #6366f1;
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .reveal-btn:hover { background: #4f46e5; transform: scale(1.03); }
+  .hidden { display: none; }
+  .warning {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 20px;
+  }
+  /* Blur overlay when tab is not active */
+  #blurOverlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    backdrop-filter: blur(25px);
+    background: rgba(15, 23, 42, 0.9);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    color: white;
+    font-size: 1.2rem;
+    text-align: center;
+    padding: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1>Can I tell you something? 👀</h1>
+  <button class="reveal-btn" onclick="reveal()">Open</button>
+  
+  <div id="message" class="hidden">
+    <p>
+      If there's anything I'm hiding from you...<br><br>
+      It's that I like you. And it isn't something that sounds reasonable to you or anybody because we haven't even met physically and you seem very very reserved and u don't want anything to make you feel I'm trespassing your boundaries thereby severing what we have that could lead to high academic achievements as study partners.
+    </p>
+    <p class="warning">Please be gentle with me ❤️</p>
+  </div>
+</div>
+
+<div id="blurOverlay">Come back to read this 👀<br><small>This page blurs when you leave</small></div>
+
+<script>
+  function reveal() {
+    document.getElementById('message').classList.remove('hidden');
+    document.querySelector('.reveal-btn').classList.add('hidden');
+  }
+
+  // Disable right click
+  document.addEventListener('contextmenu', e => e.preventDefault());
+
+  // Block common screenshot shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.key === 'PrintScreen' || (e.ctrlKey && e.shiftKey && e.key === 'S')) {
+      e.preventDefault();
+      alert('Screenshots are discouraged here ❤️');
+    }
+  });
+
+  // Blur when tab is switched
+  document.addEventListener('visibilitychange', () => {
+    const overlay = document.getElementById('blurOverlay');
+    if (document.hidden) {
+      overlay.style.display = 'flex';
+    } else {
+      overlay.style.display = 'none';
+    }
+  });
+</script>
+
+</body>
+</html>
